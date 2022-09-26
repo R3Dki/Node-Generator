@@ -3,4 +3,5 @@ A Particle Network made for my portfolio, i made it inspired by particles.js' pa
 
 The basic setup of this script is very quick and simple, you just have to create a canvas element
 <canvas id="[whatever u want]" class="nodegen"></canvas>
-test
+and include the script with
+<script src="[wherever u put it]/Node Generator.js"></script>
