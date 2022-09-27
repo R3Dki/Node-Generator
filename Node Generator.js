@@ -1,32 +1,33 @@
 //Config
-const elementId = 'canvas';
-const nNodes = 50;
-const minAcceleration = -2.0;
-const baseAcceleration = 1.2
-const maxAcceleration = 2.0;
+const elementId = 'background'; //ID of your Canvas Element
+const nNodes = Math.floor(window.innerHeight/240)*10; //Number of Nodes to create, in this case i create 10 nodes every 240px of resolution.
+const minAcceleration = -1.8; //Max Negative Acceleration
+const baseAcceleration = 1.0; //Min Acceleration(+/-)
+const maxAcceleration = 1.6; //Max Positive Acceleration
 //Graphic Customization
-let nodeLineDist = 20;
-const lineWidth = 1;
-const lineColor = 'blue';
-const nodeRadius = 5;
-const nodeColor = 'red';
-const nodeAlpha = 1;
-const opacityDivisionFactor = 900;
-
-
+let nodeLineDist = 40; //Distance between Nodes to Draw a Line
+const lineWidth = 1; //Width of Lines that connect nodes (laggy if over 1 for some particular reason)
+const lineColor = 'green'; //Color of the Lines
+const nodeColor = '#BF0000'; //Color of the Nodes (Circles)
+const nodeAlpha = 1; //Opacity of the Nodes
+const opacityDivisionFactor = 500; //It is used to modify the opacity based on node distance
+const minRad = 3 //Min Random Radius of Nodes, also if you want the same node radius just set both minRad and maxRad to the same value
+const maxRad = 7 //Max Random Radius of Nodes
 
 //Code
+let maxY = window.innerHeight;
+let maxX = window.innerWidth;
+document.getElementById(elementId).setAttribute('widht', maxX)
+document.getElementById(elementId).setAttribute('height', maxY)
 const canvas = document.getElementById(elementId);
 const ctx = canvas.getContext('2d');
 let nodeList = [];
-let distX;
-let distY;
-let min = 0;
+let distX, distY, min = 0;
 let nodeCount = 0;
 nodeLineDist *= 10;
-ctx.lineWidth = lineWidth;
 ctx.strokeStyle = lineColor;
 ctx.fillStyle = nodeColor;
+ctx.lineWidth = lineWidth;
 
 Begin();
 Renderer();
@@ -39,11 +40,14 @@ function Node() {
     this.accelerationY = Math.floor(Math.random() * (maxAcceleration - minAcceleration + 1) + minAcceleration);
     if (this.accelerationX < baseAcceleration && this.accelerationX > -baseAcceleration) {this.accelerationX = baseAcceleration}
     if (this.accelerationY < baseAcceleration && this.accelerationY > -baseAcceleration) {this.accelerationY = baseAcceleration}
+    if (minRad != maxRad) {
+        this.radius = Math.floor(Math.random() * (maxRad - minRad + 1) + minRad);
+    } else {
+        this.radius = minRad;
+    }
 }
 
 function Begin() {
-    maxY = document.getElementById(elementId).getAttribute('height');
-    maxX = document.getElementById(elementId).getAttribute('width');
     while (nNodes != nodeList.length) {
         nodeList.push(new Node());
         nodeCount = nodeList.length;
@@ -76,7 +80,7 @@ function Renderer() {
         //Draw Circles were nodes are
         ctx.globalAlpha=nodeAlpha;
         ctx.moveTo(nodeList[i].x, nodeList[i].y);
-        ctx.arc(nodeList[i].x, nodeList[i].y, nodeRadius, 0, 6.28318531);
+        ctx.arc(nodeList[i].x, nodeList[i].y, nodeList[i].radius, 0, 6.28318531);
         ctx.fill();
     }
     requestAnimationFrame(Renderer);
