@@ -1,78 +1,47 @@
-//============Code Config============//
-const elementId = 'background'; //ID of your Canvas Element
-const nNodes = Math.floor(window.innerHeight/240)*15; //Number of Nodes to create, in this case i create 10 nodes every 240px of resolution.
-const minAcceleration = -1.8; //Max Negative Acceleration
-const baseAcceleration = 1.0; //Min Acceleration(+/-)
-const maxAcceleration = 1.6; //Max Positive Acceleration
-//============Graphic Customization============//
-const showWatermark = true;
-const nodeLineDist = 200; //Distance between Nodes to Draw a Line
-const lineWidth = 1; //Width of Lines that connect nodes (laggy if over 1 for some particular reason)
-const lineColor = 'green'; //Color of the Lines
-const enableNodes = true; //Enables Nodes (just Graphically since they are needed)
-const nodeColor = '#BF0000'; //Color of the Nodes (Circles)
-const nodeAlpha = 1; //Opacity of the Nodes
-const opacityDivisionFactor = 100; //It is used to modify the opacity based on node distance
-const minRad = 3 //Min Random Radius of Nodes, also if you want the same node radius just set both minRad and maxRad to the same value
-const maxRad = 6 //Max Random Radius of Nodes
-//============Experimental Features============//
-const enableDrawer = true; // Enables Drawers, wich draw lines or polygons(depending on how you set it)
-const useExperimentalLineDrawer = true;
-// /\ If true it enables the experimental Line Drawer that uses the distance between 2 points formula(Could Lag)(More precise, circular area)
-// /\ If false it enables the default Line Drawer that's made to be lightweight and fast(Less precise, square area)
-const polygonDrawer = false; //Enables Polygon Drawer wich makes every at least 3 Nodes' gap filled
-const randomColorList = ['red', 'blue', 'green', 'yellow', 'cyan', 'purple', 'pink', 'white', 'lime', 'aqua', 'silver', 'gray', 'brown'];
-// /\ The list of colors that the Random Color functions can use, you may add or remove some colors /\
-const randomColorLinesMode = false; //Select wheter Lines have Random Color or not
-const randomColorLinesIterations = 200; //After how many Iterations should the Color change
-const randomColorNodesMode = true; //Select wheter Nodes have Random Color or not
-const randomColorNodesIterations = 200; //After how many Iterations should the Color change
-const pulsatingNodeSize = false; //Makes Nodes' radius bigger and smaller depending on how you set Min/Max Pulse Size.
-let minPulseSize = 1; //Minimum Nodes' radius decrease
-let maxPulseSize = 5; //Maximum Nodes' radius increase
-//============End of Config============//
+var request = new XMLHttpRequest();
+request.open("GET", "./resources/js/config.json", false);
+request.send(null)
+var config = JSON.parse(request.responseText);
 
-
-//Code
-let prevColorLines, randomCountLines = randomColorLinesIterations+1;
-let prevColorNodes, randomCountNodes = randomColorNodesIterations+1;
+let prevColorLines, randomCountLines = config.Drawer[8].randomColorLinesIterations+1;
+let prevColorNodes, randomCountNodes = config.Nodes[7].randomColorNodesIterations+1;
 let distX, distY, min = 0, nodeCount = 1, maxY = window.innerHeight, maxX = window.innerWidth;
 let nodeList = [];
-const canvas = document.getElementById(elementId);
+const canvas = document.getElementById(config.General[0].elementId);
 const ctx = canvas.getContext('2d');
 Begin();
 Renderer();
 
 //Functions
 async function RandomMode(params) {
-    ctx.lineWidth = lineWidth;
-    if (randomColorLinesMode) {  
+    ctx.lineWidth = config.Drawer[4].lineWidth;
+    if (config.Drawer[7].randomColorLinesMode) {  
         randomCountLines++;
-        if (randomCountLines > randomColorLinesIterations) {
-            prevColorLines = randomColorList[Math.floor(Math.random() * (randomColorList.length + 1))];
+        if (randomCountLines > config.Drawer[8].randomColorLinesIterations) {
+            prevColorLines = config.General[5].randomColorList[Math.floor(Math.random() * (config.General[5].randomColorList.length + 1))];
             ctx.strokeStyle = prevColorLines;
             randomCountLines=0;
         }
         ctx.strokeStyle =  prevColorLines;
-    } else {ctx.strokeStyle =  lineColor}
+    } else {ctx.strokeStyle =  config.Drawer[6].lineColor}
     
-    if (randomColorNodesMode) {  
+    if (config.Nodes[6].randomColorNodesMode) {  
         randomCountNodes++;
-        if (randomCountNodes > randomColorNodesIterations) {
-            prevColorNodes = randomColorList[Math.floor(Math.random() * (randomColorList.length + 1))];
+        if (randomCountNodes > config.Nodes[7].randomColorNodesIterations) {
+            prevColorNodes = config.General[5].randomColorList[Math.floor(Math.random() * (config.General[5].randomColorList.length + 1))];
             ctx.fillStyle = prevColorNodes;
             randomCountNodes=0;
         }
         ctx.fillStyle =  prevColorNodes;
-    } else {ctx.fillStyle =  nodeColor}
+    } else {ctx.fillStyle =  config.Nodes[2].nodeColor}
 }
 
 async function PulseNodes(i) {
-    if (pulsatingNodeSize) {   
-        if (nodeList[i].radius >= maxPulseSize) {
+    if (config.Nodes[8].pulsatingNodeSize) {   
+        if (nodeList[i].radius >= config.Nodes[10].maxPulseSize) {
             nodeList[i].pulsating = !nodeList[i].pulsating;
         }
-        if (nodeList[i].radius <= minPulseSize) {
+        if (nodeList[i].radius <= config.Nodes[9].minPulseSize) {
             nodeList[i].pulsating = !nodeList[i].pulsating;
         }
         if(nodeList[i].pulsating) {nodeList[i].radius++;}
@@ -82,7 +51,7 @@ async function PulseNodes(i) {
 }
 
 async function Watermark() {
-    if (showWatermark) {
+    if (config.General[4].showWatermark) {
         ctx.font = "24px arial";
         ctx.strokeStyle = 'red';
         ctx.strokeText("By R3Dki", 0, maxY-10, 100);
@@ -94,49 +63,49 @@ async function Watermark() {
 function Node() {
     this.x = Math.floor(Math.random() * (maxX - min + 1) + min);
     this.y = Math.floor(Math.random() * (maxY - min + 1) + min);
-    this.accelerationX = Math.floor(Math.random() * (maxAcceleration - minAcceleration + 1) + minAcceleration);
-    this.accelerationY = Math.floor(Math.random() * (maxAcceleration - minAcceleration + 1) + minAcceleration);
-    if (this.accelerationX < baseAcceleration && this.accelerationX > -baseAcceleration) {this.accelerationX = baseAcceleration}
-    if (this.accelerationY < baseAcceleration && this.accelerationY > -baseAcceleration) {this.accelerationY = baseAcceleration}
-    this.radius = minRad;
-    if (minRad != maxRad) {
-        this.radius = Math.floor(Math.random() * (maxRad - minRad + 1) + minRad);
+    this.accelerationX = Math.floor(Math.random() * (config.General[3].maxAcceleration - config.General[1].minAcceleration + 1) + config.General[1].minAcceleration);
+    this.accelerationY = Math.floor(Math.random() * (config.General[3].maxAcceleration - config.General[1].minAcceleration + 1) + config.General[1].minAcceleration);
+    if (this.accelerationX < config.General[2].baseAcceleration && this.accelerationX > -config.General[2].baseAcceleration) {this.accelerationX = config.General[2].baseAcceleration}
+    if (this.accelerationY < config.General[2].baseAcceleration && this.accelerationY > -config.General[2].baseAcceleration) {this.accelerationY = config.General[2].baseAcceleration}
+    this.radius = config.Nodes[4].minRad;
+    if (config.Nodes[4].minRad != config.Nodes[5].maxRad) {
+        this.radius = Math.floor(Math.random() * (config.Nodes[5].maxRad - config.Nodes[4].minRad + 1) + config.Nodes[4].minRad);
     }
-    if(pulsatingNodeSize){
-        this.radius = minPulseSize+1;
+    if(config.Nodes[8].pulsatingNodeSize){
+        this.radius = config.Nodes[9].minPulseSize+1;
         this.pulsating = true;
     }
 }
 
 function Begin() {
     //Vars Check
-    minPulseSize = Math.abs(minPulseSize);
-    maxPulseSize = Math.abs(maxPulseSize);
-    while (nNodes != nodeList.length) {
+    config.Nodes[9].minPulseSize = Math.abs(config.Nodes[9].minPulseSize);
+    config.Nodes[10].maxPulseSize = Math.abs(config.Nodes[10].maxPulseSize);
+    while (config.Nodes[1].nNodes != nodeList.length) {
         nodeList.push(new Node());
         nodeCount = nodeList.length;
     }
 }
 
 async function DrawerAsyncExperimental(i) {
-    if (useExperimentalLineDrawer && !polygonDrawer) {
+    if (config.Drawer[1].useExperimentalLineDrawer && !config.Drawer[2].polygonDrawer) {
         for (let j = i; j < nodeCount; j++) {
             distance = Math.sqrt(Math.pow((nodeList[j].x-nodeList[i].x),2)+Math.pow((nodeList[j].y-nodeList[i].y),2));
-            if (Math.abs(distance) <= nodeLineDist) {
+            if (Math.abs(distance) <= config.Drawer[3].nodeLineDist) {
                 ctx.moveTo(nodeList[i].x, nodeList[i].y);
                 ctx.lineTo(nodeList[j].x, nodeList[j].y);
-                ctx.globalAlpha = opacityDivisionFactor / distance;
+                ctx.globalAlpha = config.Drawer[5].opacityDivisionFactor / distance;
                 ctx.stroke();
             }
         }
-    }else if (!polygonDrawer) {
+    }else if (!config.Drawer[2].polygonDrawer) {
         for (let j = i; j < nodeCount; j++) {
             distX = nodeList[j].x-nodeList[i].x;
             distY = nodeList[j].y-nodeList[i].y;
-            if (Math.abs(distX) <= nodeLineDist && Math.abs(distY) <= nodeLineDist) {
+            if (Math.abs(distX) <= config.Drawer[3].nodeLineDist && Math.abs(distY) <= config.Drawer[3].nodeLineDist) {
                 ctx.moveTo(nodeList[j].x, nodeList[j].y);
                 ctx.lineTo(nodeList[i].x, nodeList[i].y);
-                ctx.globalAlpha = opacityDivisionFactor/(Math.abs(distX)+Math.abs(distY));
+                ctx.globalAlpha = config.Drawer[5].opacityDivisionFactor/(Math.abs(distX)+Math.abs(distY));
                 ctx.stroke();
             }
         }
@@ -144,7 +113,7 @@ async function DrawerAsyncExperimental(i) {
         for (let j = i; j < nodeCount; j++) {
             distance = Math.sqrt(Math.pow((nodeList[j].x-nodeList[i].x),2)+Math.pow((nodeList[j].y-nodeList[i].y),2));
             ctx.globalAlpha = 1;
-            if (Math.abs(distance) <= nodeLineDist) {
+            if (Math.abs(distance) <= config.Drawer[3].nodeLineDist) {
                 ctx.lineTo(nodeList[j].x, nodeList[j].y);
             }
         }
@@ -152,8 +121,8 @@ async function DrawerAsyncExperimental(i) {
 }
 
 async function NodeDrawAsync(i) {
-    if (enableNodes) {
-        ctx.globalAlpha=nodeAlpha;
+    if (config.Nodes[0].enableNodes) {
+        ctx.globalAlpha=config.Nodes[3].nodeAlpha;
         ctx.moveTo(nodeList[i].x, nodeList[i].y);
         ctx.arc(nodeList[i].x, nodeList[i].y, nodeList[i].radius, 0, 6.28318531);
     }
@@ -179,7 +148,7 @@ function Renderer() {
         nodeList[i].x += nodeList[i].accelerationX;
         nodeList[i].y += nodeList[i].accelerationY;
         //Draw Lines between nearing Nodes
-        if (enableDrawer) {
+        if (config.Drawer[0].enableDrawer) {
             DrawerAsyncExperimental(i);
         }
         //Draw Circles were nodes are
